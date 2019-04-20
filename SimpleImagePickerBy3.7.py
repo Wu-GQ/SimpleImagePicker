@@ -86,5 +86,5 @@ def download_by_urlopen():
 
 if __name__ == '__main__':
     if confirm_save_folder():
-        # download_by_urlretrieve()
-        download_by_urlopen()
+        download_by_urlretrieve()
+        # download_by_urlopen()
