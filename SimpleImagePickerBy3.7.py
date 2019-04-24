@@ -4,19 +4,18 @@ import random
 import os
 import copy
 
-
 # 在线图片前缀
-IMG_PREFIX_URL = 'IMG_URL'
+IMG_PREFIX_URL = 'http://analyse.kiiik.com/images/index/banner'
 # 在线图片后缀
 IMG_SUFFIX_URL = '.jpg'
 # 图片开始序号
-IMG_START_INDEX = 0
+IMG_START_INDEX = 2
 # 图片结束序号
-IMG_END_INDEX = 1
+IMG_END_INDEX = 2
 # 图片序号最少长度
-IMG_INDEX_MIN_LENGTH = 2
+IMG_INDEX_MIN_LENGTH = 1
 
-# 本地保存路径（相对路径）
+# 本地保存的文件夹名（相对路径）
 SAVE_FOLDER_PATH = 'FOLDER_NAME/'
 # 本地保存的图片名前缀
 IMG_PREFIX_FILENAME = time.strftime("%Y%m%d%H%M%S_", time.localtime())
@@ -52,22 +51,39 @@ def confirm_save_folder():
         return bool(True)
 
 
-def download_by_urlretrieve(failed_array):
-    """ 通过request.urlretrieve方式下载图片 """
-    for i in range(IMG_START_INDEX, IMG_END_INDEX + 1):
-        img_online_path = IMG_PREFIX_URL + str(i).zfill(IMG_INDEX_MIN_LENGTH) + IMG_SUFFIX_URL
-        img_local_path = SAVE_FOLDER_PATH + IMG_PREFIX_FILENAME + str(i).zfill(IMG_INDEX_MIN_LENGTH) + IMG_SUFFIX_URL
+def download_image_by_urlretrieve(index):
+    """ 根据序号下载单张图片 """
+    img_online_path = IMG_PREFIX_URL + str(index).zfill(IMG_INDEX_MIN_LENGTH) + IMG_SUFFIX_URL
+    img_local_path = SAVE_FOLDER_PATH + IMG_PREFIX_FILENAME + str(index).zfill(IMG_INDEX_MIN_LENGTH) + IMG_SUFFIX_URL
 
-        print(img_online_path + ' 开始下载……', end='\n\t')
-        try:
-            request.urlretrieve(img_online_path, img_local_path)
-            print('下载完毕，保存位置: ' + img_local_path)
-        except Exception as e:
-            # 保存下载错误的序号
+    print(img_online_path + ' 开始下载……', end='\n\t')
+    try:
+        request.urlretrieve(img_online_path, img_local_path)
+        print('下载完毕，保存位置: ' + img_local_path)
+    except Exception as e:
+        print('序号 ' + str(index) + ' 下载出错，Error: ' + str(e))
+        return bool(False)
+    return bool(True)
+
+
+def download_images_by_urlretrieve(failed_array):
+    """ 通过request.urlretrieve方式，按序号下载图片 """
+    for i in range(IMG_START_INDEX, IMG_END_INDEX + 1):
+        if download_image_by_urlretrieve(i):
+            time.sleep(random.uniform(2, 4))
+        else:
             failed_array.append(i)
-            print('序号 ' + str(i) + ' 下载出错，Error: ' + str(e))
-        finally:
-            time.sleep(random.uniform(2, 5))
+            time.sleep(random.uniform(1, 2))
+
+
+def download_images_array_by_urlretrieve(download_images_array, failed_array):
+    """ 通过request.urlretrieve方式，按序列中的序号下载图片 """
+    for i in download_images_array:
+        if download_image_by_urlretrieve(i):
+            time.sleep(random.uniform(2, 4))
+        else:
+            failed_array.append(i)
+            time.sleep(random.uniform(1, 2))
 
 
 def download_by_urlopen():
@@ -85,33 +101,26 @@ def download_by_urlopen():
             time.sleep(random.uniform(2, 5))
 
 
-def download_by_urlretrieve(download_array, failed_array):
-    print('开始下载特定序号的图片')
-    # TODO: complete this function
-
-
 if __name__ == '__main__':
     if confirm_save_folder():
         download_failed_array = []
 
-        download_by_urlretrieve(download_failed_array)
+        download_images_by_urlretrieve(download_failed_array)
         # download_by_urlopen()
 
         # 确认是否对下载出错的图片进行重新下载
         while len(download_failed_array) > 0:
-            print('下载错误的序号列表:')
-            for i in download_failed_array:
-                print(i, end=', ')
+            print('\n下载错误的序号列表:\n' + str(download_failed_array))
 
             c = input('是否对下载错误的图片进行重新下载(Y/N):')
-            if c != 'N' or c != 'n':
+            if c != 'N' and c != 'n':
                 download_array = copy.deepcopy(download_failed_array)
                 download_failed_array.clear()
 
-                print('开始下载特定序号的图片')
-                download_by_urlretrieve(download_array, download_failed_array)
+                print('开始下载特定序号的图片……')
+                download_images_array_by_urlretrieve(download_array, download_failed_array)
             else:
-                print('取消下载特定序号的图片')
+                print('取消下载特定序号的图片!')
                 break
 
         print('\n下载任务已完成！')
